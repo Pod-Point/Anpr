@@ -1,15 +1,15 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-ifeq ("$(OS)","Windows_NT") 
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Linux)
+
+#ifeq ("$(OS)","Windows_NT") 
 CC    = gcc# -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
 CXX = g++# -fmessage-length=0
 
-LDLIBS += -lopenalpr -lopencv_imgproc341 -lopencv_imgcodecs341 -lopencv_core341 -lopencv_highgui341 -lopencv_videoio341 -lopencv_video341 -lopencv_ffmpeg341# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
-LIB_EXTENSION = dll
-INCLUDE := ./
-DIR_OPENCV_INCLUDE   := "C:/Users/Jose/Documents/Utility/opencv/build/include"
-DIR_OPENALPR_INCLUDE := "C:/Users/Jose/Documents/Utility/openalpr-mingw/src/openalpr"
-DIR_LIB := "C:/Users/Jose/Documents/Projects/Pod-Point/PlateRec/Lib"
+LDLIBS += -lopenalpr\
+	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video #-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
 
 else
 CC    = arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
@@ -42,10 +42,10 @@ CPPFLAGS := -I$(INCLUDE) -I$(DIR_OPENCV_INCLUDE) -I$(DIR_OPENALPR_INCLUDE)
 #endif
 CFLAGS += -O0 -g3 -Wall
 CXXFLAGS += -std=c++11 -O0 -g3 -Wall #-D_GLIBCXX_USE_CXX11_ABI=0
-LDFLAGS += -L$(DIR_LIB)
+#LDFLAGS += -L$(DIR_LIB)
 
 TARGET_DIR = build
-TARGET  = PlateRecongnition
+TARGET  = PodPointAnpr
 
 CPPSRCS := $(wildcard *.cpp)
 CPPOBJS := $(patsubst %.cpp, $(TARGET_DIR)/%.o, $(CPPSRCS))
@@ -55,7 +55,7 @@ all: $(TARGET_DIR)/$(TARGET)
 
 $(TARGET_DIR)/$(TARGET) : $(COBJS) $(CPPOBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS) $(LDLIBS)
-	cp $(DIR_LIB)/*.* $(TARGET_DIR)/
+#	cp $(DIR_LIB)/*.* $(TARGET_DIR)/
 	
 #$(TARGET_DIR)/%.o: %.cpp | $(TARGET_DIR)
 #	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
