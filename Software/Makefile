@@ -9,7 +9,7 @@ CC    = gcc# -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
 CXX = g++# -fmessage-length=0
 
 LDLIBS += -lopenalpr\
-	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video #-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
+	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
 
 else
 CC    = arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall

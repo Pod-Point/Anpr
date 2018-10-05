@@ -16,6 +16,9 @@ int main(int, char**)
 	chrono::system_clock::time_point startTime;
 	chrono::system_clock::time_point endTime;
 
+	chrono::system_clock::time_point startTime_algo;
+	chrono::system_clock::time_point endTime_algo;
+
 	unordered_map<string, int> plateHist;
 	// Image Name
 	string imgNamePrefix = "/home/jose/Documents/Projects/PodPoint/Anpr/Result/img";
@@ -58,22 +61,16 @@ int main(int, char**)
     Mat edges;
     Mat frame;
     Mat hsv;
-//    cout << ++plateHist["cane"] << endl;
-//    bool ret = plateHist.insert({"ciao", 1}).second;
-//    cout << ret <<endl;
-//    ret = plateHist.insert({"ciao", 2}).second;
-//    cout << ret <<endl;
-//
-//    for (std::pair<std::string, int> element : plateHist)
-//		std::cout << element.first << " :: " << element.second << std::endl;
-//
-//	return 0;
+
     startTime = chrono::system_clock::now();
     endTime = chrono::system_clock::now();
     bool readFlag = false;
     namedWindow("Plate",1);
+    int numTest = 0;
+    uint64_t sumtime = 0;
     for(;;)
     {
+    	startTime_algo = chrono::system_clock::now();
 
         cap >> frame; // get a new frame from camera CV_8UC3
 //        cout << frame.size() << endl;
@@ -91,22 +88,15 @@ int main(int, char**)
 
         imshow("Plate", frame);
         waitKey(30);
-//        if(waitKey(30) >= 0) break;
-//          if(waitKey(30) >= 0) continue;
-        // Recognize an image file.  You could alternatively provide the image bytes in-memory.
-//        alpr::AlprResults results = openalpr.recognize("C:/Users/Jose/Documents/Projects/Pod-Point/PlateRec/Data/data0.jpg");
-//        imwrite("C:/Users/Jose/Documents/Projects/Pod-Point/PlateRec/build/img.jpg", frame);
+
         string imgName = imgNamePrefix + to_string(imgNumber) + imgNameSuffix;
 //        imwrite(imgName, frame);
 
         std::vector<alpr::AlprRegionOfInterest> regionsOfInterest;
-        regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols, frame.rows));
+        regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols/2, frame.rows));
+        regionsOfInterest.push_back(alpr::AlprRegionOfInterest(frame.cols/2, 0, frame.cols/2, frame.rows));
         alpr::AlprResults results;
 
-//        // Reset timer, no car has been recently detected
-//        if(plateHist.empty()){
-//        	startTime = chrono::system_clock::now();
-//        }
 
         //reduce probability
         vector<string> v2rm;
@@ -146,21 +136,24 @@ int main(int, char**)
 			plateHist.clear();
 		}
 
-
-        try{
-
         results = openalpr.//recognize(imgName);
-        		recognize(frame.data, frame.elemSize(), frame.cols, frame.rows, regionsOfInterest);
-        }catch(...){
-        	std::cout << "OCR problems" << std::endl;
-        	continue;
-        }
+         		recognize(frame.data, frame.elemSize(), frame.cols, frame.rows, regionsOfInterest);
+
         if( results.plates.size() < 1){
+        	endTime_algo = chrono::system_clock::now();
+        	auto dt = endTime_algo - startTime_algo;
+//        	cout<< "Algo time no plate " << dt.count() << "\n";
+        	sumtime += dt.count();
+        	if(numTest > 1000){
+        		sumtime /= 1000;
+        		cout<< "Algo time no plate mean time" << dt.count() << "\n";
+        		numTest = 0;
+        	}
+        	numTest++;
         	continue;
         }
         imwrite(imgName, frame);
 
-//        imshow("Plate", frame);
         // Write log file
         time_t result = std::time(nullptr);
         char * timeStr = asctime(localtime(&result));
@@ -174,7 +167,7 @@ int main(int, char**)
 		for (uint32_t i = 0; i < results.plates.size(); i++)
 		{
 			alpr::AlprPlateResult plate = results.plates[i];
-//			cout << "plate" << i << ": " << plate.topNPlates.size() << " results" << endl;
+			cout << "plate" << i << ": " << plate.topNPlates.size() << " results" << endl;
 
 
 			for (uint32_t k = 0; k < plate.topNPlates.size(); k++)
@@ -195,6 +188,10 @@ int main(int, char**)
 		startTime = chrono::system_clock::now();
 		readFlag = true;
 		ofs << endl;
+
+		endTime_algo = chrono::system_clock::now();
+		auto dt = endTime_algo - startTime_algo;
+		cout<< "Algo time with plate " << dt.count() << "\n";
     }
     ofs.close();
     // the camera will be deinitialized automatically in VideoCapture destructor
