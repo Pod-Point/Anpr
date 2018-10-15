@@ -6,6 +6,10 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <chrono>
+#include "PlateHistogram.h"
+//#define RASP
+#define DEBUG_IMAGE
+#define TEST
 
 using namespace cv;
 using namespace std;
@@ -18,17 +22,25 @@ int main(int, char**)
 
 	chrono::system_clock::time_point startTime_algo;
 	chrono::system_clock::time_point endTime_algo;
+	PlateHistogram::PlateHistogramManager phistManager;
 
-	unordered_map<string, int> plateHist;
 	// Image Name
+#if !defined(RASP)
 	string imgNamePrefix = "/home/jose/Documents/Projects/PodPoint/Anpr/Result/img";
+#else
+	string imgNamePrefix = "/home/pi/Documents/Projects/Anpr/Result/img";
+#endif
 	int imgNumber = 0;
 	string imgNameSuffix = ".jpg";
 
 	// LogFile
+#if !defined(RASP)
 	ofstream ofs("/home/jose/Documents/Projects/PodPoint/Anpr/Result/Log.txt");
+#else
+	ofstream ofs("/home/pi/Documents/Projects/Anpr/Result/Log.txt");
+#endif
 	if(!ofs.is_open())
-	cout << "fanculo" << endl;
+	cout << "file not opened" << endl;
 
 
     VideoCapture cap(0); // open the default camera
@@ -38,25 +50,26 @@ int main(int, char**)
     	cout << "Error open" << endl;
         return -1;
     }
+    cap.set(CV_CAP_PROP_FRAME_WIDTH,1280);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT,960);
+	// Initialize the library using United States style license plates.
+	// You can use other countries/regions as well (for example: "eu", "au", or "kr")
+	alpr::Alpr openalpr("gb", "/etc/openalpr/opena-lpr.conf");
 
-	 // Initialize the library using United States style license plates.
-	 // You can use other countries/regions as well (for example: "eu", "au", or "kr")
-	 alpr::Alpr openalpr("gb", "/etc/openalpr/opena-lpr.conf");
+	// Optionally specify the top N possible plates to return (with confidences).  Default is 10
+	openalpr.setTopN(5);
 
-	 // Optionally specify the top N possible plates to return (with confidences).  Default is 10
-	 openalpr.setTopN(10);
+	// Optionally, provide the library with a region for pattern matching.  This improves accuracy by
+	// comparing the plate text with the regional pattern.
+	openalpr.setDefaultRegion("md");
 
-	 // Optionally, provide the library with a region for pattern matching.  This improves accuracy by
-	 // comparing the plate text with the regional pattern.
-	 openalpr.setDefaultRegion("md");
-
-	 // Make sure the library loaded before continuing.
-	 // For example, it could fail if the config/runtime_data is not found
-	 if (openalpr.isLoaded() == false)
-	 {
-		 std::cerr << "Error loading OpenALPR" << std::endl;
-		 return 1;
-	 }
+	// Make sure the library loaded before continuing.
+	// For example, it could fail if the config/runtime_data is not found
+	if (openalpr.isLoaded() == false)
+	{
+		std::cerr << "Error loading OpenALPR" << std::endl;
+		return 1;
+	}
 
     Mat edges;
     Mat frame;
@@ -64,10 +77,17 @@ int main(int, char**)
 
     startTime = chrono::system_clock::now();
     endTime = chrono::system_clock::now();
-    bool readFlag = false;
+#if defined(DEBUG_IMAGE)
     namedWindow("Plate",1);
+#endif
     int numTest = 0;
     uint64_t sumtime = 0;
+    cap >> frame;
+    std::vector<alpr::AlprRegionOfInterest> regionsOfInterest;
+    regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols/2, frame.rows));
+    regionsOfInterest.push_back(alpr::AlprRegionOfInterest(frame.cols/2, 0, frame.cols/2, frame.rows));
+    alpr::AlprResults results;
+
     for(;;)
     {
     	startTime_algo = chrono::system_clock::now();
@@ -77,82 +97,58 @@ int main(int, char**)
 //        cout << frame.channels() << endl;
 //        cout << frame.type() << endl;
 //        cout << frame.at(0,0) << endl;
-
-		cvtColor(frame, hsv, COLOR_BGR2HSV);
-		Scalar pixelmean = mean(hsv);
-        Scalar pixelsum = sum(hsv);
+        //{need for darkness
+//		cvtColor(frame, hsv, COLOR_BGR2HSV);
+//		Scalar pixelmean = mean(hsv);
+//        Scalar pixelsum = sum(hsv);
 //        cout << "mean" << pixelmean << endl;
 //        cout << "sum" << pixelsum << endl;
-        if(pixelmean.val[2] < 80)
-        	cout << "Night" << endl;
-
+//        if(pixelmean.val[2] < 80)
+//        	cout << "Night" << endl;
+        //}need for darkness
+#if defined(DEBUG_IMAGE)
         imshow("Plate", frame);
         waitKey(30);
+#endif
 
         string imgName = imgNamePrefix + to_string(imgNumber) + imgNameSuffix;
-//        imwrite(imgName, frame);
-
-        std::vector<alpr::AlprRegionOfInterest> regionsOfInterest;
-        regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols/2, frame.rows));
-        regionsOfInterest.push_back(alpr::AlprRegionOfInterest(frame.cols/2, 0, frame.cols/2, frame.rows));
-        alpr::AlprResults results;
 
 
         //reduce probability
-        vector<string> v2rm;
-		for (std::pair<std::string, int> plateElem : plateHist){
-			plateElem.second--;
-			if(plateElem.second < 0){
-				v2rm.push_back(plateElem.first);
+        phistManager.removeInconsistency();
+        // check if a plate is available on left and on the right
+        for(PlateHistogram::Position pos = PlateHistogram::Position::kLeft;
+        		pos < PlateHistogram::Position::kMaxPosition;
+        		pos = static_cast<PlateHistogram::Position>(static_cast<int>(pos) + 1)){
+			if(phistManager.isPlateAvailable(pos)){
+				string finalPlate = phistManager.getBestCalculatedPlate(pos);
+
+				cout<< "###########################\n";
+				cout<< "Alpr Result "<< static_cast<int>(pos) << " " << finalPlate << "\n";
+				cout<< "###########################" << endl;
 			}
-		}
-
-		// remove unused
-		for(auto e2rm: v2rm){
-			plateHist.erase(e2rm);
-		}
-
-		// sendo if it is time to
-		endTime = chrono::system_clock::now();
-		chrono::duration<float> time_elapsed = endTime - startTime;
-
-		if(readFlag && time_elapsed.count() > 10){
-			readFlag = false;
-			// fin the max
-			string finalPlate;
-			int maxOccurence = 0;
-
-			for(auto  plateElem : plateHist){
-				if(plateElem.second > maxOccurence){
-					maxOccurence = plateElem.second;
-					finalPlate = plateElem.first;
-				}
-			}
-
-			cout<< "###########################\n";
-			cout<< "Alpr Result " << finalPlate << "\n";
-
-			cout<< "###########################" << endl;
-			plateHist.clear();
-		}
+        }
 
         results = openalpr.//recognize(imgName);
          		recognize(frame.data, frame.elemSize(), frame.cols, frame.rows, regionsOfInterest);
 
+        imwrite(imgName, frame);
+        imgNumber++;
+
         if( results.plates.size() < 1){
         	endTime_algo = chrono::system_clock::now();
-        	auto dt = endTime_algo - startTime_algo;
-//        	cout<< "Algo time no plate " << dt.count() << "\n";
-        	sumtime += dt.count();
+        	auto delta = chrono::duration_cast<chrono::milliseconds>(endTime_algo-startTime_algo);
+        	sumtime += delta.count();
         	if(numTest > 1000){
         		sumtime /= 1000;
-        		cout<< "Algo time no plate mean time" << dt.count() << "\n";
+        		cout<< "Algo time no plate mean time " << sumtime << endl;
         		numTest = 0;
+        		sumtime = 0;
         	}
+
         	numTest++;
         	continue;
         }
-        imwrite(imgName, frame);
 
         // Write log file
         time_t result = std::time(nullptr);
@@ -167,26 +163,33 @@ int main(int, char**)
 		for (uint32_t i = 0; i < results.plates.size(); i++)
 		{
 			alpr::AlprPlateResult plate = results.plates[i];
-			cout << "plate" << i << ": " << plate.topNPlates.size() << " results" << endl;
+//			cout << "plate" << i << ": " << plate.topNPlates.size() << " results" << endl;
+//			for(auto roi : results.regionsOfInterest){
+//				cout << "x,y: " << roi.x << "," << roi.y << endl;
+//			}
+			PlateHistogram::Position location = PlateHistogram::Position::kLeft;
 
-
-			for (uint32_t k = 0; k < plate.topNPlates.size(); k++)
-			{
-				alpr::AlprPlate candidate = plate.topNPlates[k];
+			if(plate.plate_points[0].x > frame.cols/8*3){
+				location = PlateHistogram::Position::kRight;
+			}
+			phistManager.addPossiblePlate(plate.bestPlate.characters, plate.bestPlate.matches_template, location);
+			cout << static_cast<int>(location) << " " << plate.bestPlate.characters << endl;
+			ofs << " location: " << static_cast<int>(location) << " " << plate.bestPlate.characters << "\t" << plate.bestPlate.overall_confidence << "\t" << "pattern_match: " << plate.bestPlate.matches_template << "\t";
+//			ofs << "rest :";
+//			for (uint32_t k = 0; k < plate.topNPlates.size(); k++)
+//			{
+//				alpr::AlprPlate candidate = plate.topNPlates[k];
 //				std::cout << "    - " << candidate.characters << "\t confidence: " << candidate.overall_confidence;
 //			    std::cout << "\t pattern_match: " << candidate.matches_template << std::endl;
 
-			    ofs << candidate.characters << "\t" << candidate.overall_confidence << "\t" << "pattern_match: " << candidate.matches_template << "\t";
-			    plateHist[candidate.characters] += (candidate.matches_template*10) + 2;
+//			    ofs << candidate.characters << "\t" << candidate.overall_confidence << "\t" << "pattern_match: " << candidate.matches_template << "\t";
+//			    plateHist[candidate.characters] += (candidate.matches_template*10) + 2;
+//			    phistManager.addPossiblePlate(candidate.characters, candidate.matches_template, location);
+//			}
 
-			}
-
-
-			// TODO: fix this, it will check only one plate
-			break;
 		}
+		cout << "--------------" << endl;
 		startTime = chrono::system_clock::now();
-		readFlag = true;
 		ofs << endl;
 
 		endTime_algo = chrono::system_clock::now();
@@ -197,4 +200,5 @@ int main(int, char**)
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
 }
+
 

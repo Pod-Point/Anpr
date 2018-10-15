@@ -3,35 +3,51 @@ PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
-
-#ifeq ("$(OS)","Windows_NT") 
+##
+###ifeq ("$(OS)","Windows_NT") 
 CC    = gcc# -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
 CXX = g++# -fmessage-length=0
-
+INCLUDE = -I.
 LDLIBS += -lopenalpr\
 	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
-
+##
 else
-CC    = arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
-CXX = arm-linux-gnueabihf-g++ #-std=c++0x -I/lib/ -w  -fmessage-length=0 -Wall
-INCLUDE = \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include" \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9" \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9/backward" \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/include" \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/use/include/arm-linux/gnueabihf" \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include" \
-    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include-fixed"
-    
-DIR_OPENSSL_INCLUDE = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
-DIR_CURL_LIB = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
-LDLIBS += -lIDTechSDK -lcrypto -lcurl -lpthread
-LDFLAGS += -L. -Wl,-R. '-Wl,-R$$ORIGIN' -Wl,--rpath-link=C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/lib/arm-linux-gnueabihf -Wl,--rpath-link=C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf
-LIB_EXTENSION = so
+TOOLCHAIN_PATH :=/home/jose/Documents/Utility/YoctoRPi/tools
+CC  = $(TOOLCHAIN_PATH)/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
+CXX = $(TOOLCHAIN_PATH)/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ --sysroot=/home/jose/Documents/Utility/YoctoRPi/sysroot #-std=c++0x -I/lib/ -w  -fmessage-length=0 -Wall
+#INCLUDE = \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9/backward" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/include" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/use/include/arm-linux/gnueabihf" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include-fixed"
+#    
+INCLUDE = -I. \
+	-I/home/jose/Documents/Utility/YoctoRPi/sysroot/usr/include/arm-linux-gnueabihf/
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9/backward" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/include" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/use/include/arm-linux/gnueabihf" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include" \
+#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include-fixed"
+
+#DIR_OPENSSL_INCLUDE = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
+#DIR_CURL_LIB = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
+#LDLIBS += -lIDTechSDK -lcrypto -lcurl -lpthread
+#LDFLAGS += -L. -Wl,-R. '-Wl,-R$$ORIGIN' -Wl,--rpath-link=C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/lib/arm-linux-gnueabihf -Wl,--rpath-link=C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf
+LDFLAGS = -L/home/jose/Documents/Utility/YoctoRPi/sysroot/usr/lib \
+		  -L/home/jose/Documents/Utility/YoctoRPi/sysroot/usr/lib/arm-linux-gnueabihf
+#LIB_EXTENSION = so
+LDLIBS += -lopenalpr\
+	-lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
+
 endif
 
 #OBJS = sw.o
-CPPFLAGS := -I$(INCLUDE) -I$(DIR_OPENCV_INCLUDE) -I$(DIR_OPENALPR_INCLUDE)
+CPPFLAGS := $(INCLUDE)#-I$(DIR_OPENCV_INCLUDE) -I$(DIR_OPENALPR_INCLUDE)
 
 #ifeq ($(BUILD_MODE),debug)
 #	CFLAGS += -O0 -g3 -Wall
