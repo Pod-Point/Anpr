@@ -9,7 +9,8 @@
 #include "PlateHistogram.h"
 //#define RASP
 #define DEBUG_IMAGE
-#define TEST
+//#define TEST
+//#define BEST_ALGO
 
 using namespace cv;
 using namespace std;
@@ -82,7 +83,26 @@ int main(int, char**)
 #endif
     int numTest = 0;
     uint64_t sumtime = 0;
+#if defined(TEST)
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1025/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1029/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1044/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1048/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1123/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1130/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1135/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1200/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1211/fwout/img";
+//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1211/bwin/img";
+      string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1211/bwinLL/img";
+    string test_post = ".jpg";
+    int test_num = 263;
+    int test_num_max = 291;
+    frame = imread(test_pre+to_string(test_num)+test_post);
+#else
     cap >> frame;
+#endif
+
     std::vector<alpr::AlprRegionOfInterest> regionsOfInterest;
     regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols/2, frame.rows));
     regionsOfInterest.push_back(alpr::AlprRegionOfInterest(frame.cols/2, 0, frame.cols/2, frame.rows));
@@ -92,7 +112,31 @@ int main(int, char**)
     {
     	startTime_algo = chrono::system_clock::now();
 
-        cap >> frame; // get a new frame from camera CV_8UC3
+#if defined(TEST)
+    	if(test_num > test_num_max){
+            //reduce probability
+            phistManager.removeInconsistency();
+            // check if a plate is available on left and on the right
+            for(PlateHistogram::Position pos = PlateHistogram::Position::kLeft;
+            		pos < PlateHistogram::Position::kMaxPosition;
+            		pos = static_cast<PlateHistogram::Position>(static_cast<int>(pos) + 1)){
+    			if(phistManager.isPlateAvailable(pos)){
+    				string finalPlate = phistManager.getBestCalculatedPlate(pos);
+
+    				cout<< "###########################\n";
+    				cout<< "Alpr Result "<< static_cast<int>(pos) << " " << finalPlate << "\n";
+    				cout<< "###########################" << endl;
+    			}
+            }
+    		return 0;
+    	}
+
+    	frame = imread(test_pre+to_string(test_num)+test_post);
+    	test_num++;
+
+#else
+    	cap >> frame;
+#endif
 //        cout << frame.size() << endl;
 //        cout << frame.channels() << endl;
 //        cout << frame.type() << endl;
@@ -128,13 +172,12 @@ int main(int, char**)
 				cout<< "###########################" << endl;
 			}
         }
-
         results = openalpr.//recognize(imgName);
          		recognize(frame.data, frame.elemSize(), frame.cols, frame.rows, regionsOfInterest);
-
+#if defined(DEBUG_IMAGE)
         imwrite(imgName, frame);
         imgNumber++;
-
+#endif
         if( results.plates.size() < 1){
         	endTime_algo = chrono::system_clock::now();
         	auto delta = chrono::duration_cast<chrono::milliseconds>(endTime_algo-startTime_algo);
@@ -156,8 +199,10 @@ int main(int, char**)
         size_t len = strlen(timeStr);
         if (len > 0 && timeStr[len-1] == '\n') timeStr[--len] = '\0';
         ofs << timeStr << "\t" << imgName << "\t";
+#if !defined(DEBUG_IMAGE)
         imwrite(imgName, frame);
         imgNumber++;
+#endif
         // Iterate through the results.  There may be multiple plates in an image,
         // and each plate return sthe top N candidates.
 		for (uint32_t i = 0; i < results.plates.size(); i++)
@@ -167,26 +212,34 @@ int main(int, char**)
 //			for(auto roi : results.regionsOfInterest){
 //				cout << "x,y: " << roi.x << "," << roi.y << endl;
 //			}
+
 			PlateHistogram::Position location = PlateHistogram::Position::kLeft;
 
 			if(plate.plate_points[0].x > frame.cols/8*3){
 				location = PlateHistogram::Position::kRight;
 			}
-			phistManager.addPossiblePlate(plate.bestPlate.characters, plate.bestPlate.matches_template, location);
+#if !defined(BEST_ALGO)
+			phistManager.addPossiblePlate(plate.bestPlate.characters, plate.bestPlate.overall_confidence, plate.bestPlate.matches_template, location);
 			cout << static_cast<int>(location) << " " << plate.bestPlate.characters << endl;
 			ofs << " location: " << static_cast<int>(location) << " " << plate.bestPlate.characters << "\t" << plate.bestPlate.overall_confidence << "\t" << "pattern_match: " << plate.bestPlate.matches_template << "\t";
+#else
 //			ofs << "rest :";
-//			for (uint32_t k = 0; k < plate.topNPlates.size(); k++)
-//			{
-//				alpr::AlprPlate candidate = plate.topNPlates[k];
-//				std::cout << "    - " << candidate.characters << "\t confidence: " << candidate.overall_confidence;
-//			    std::cout << "\t pattern_match: " << candidate.matches_template << std::endl;
+			for (uint32_t k = 0; k < plate.topNPlates.size(); k++)
+			{
+				alpr::AlprPlate candidate = plate.topNPlates[k];
+				std::cout << "    - " << candidate.characters << "\t confidence: " << candidate.overall_confidence;
+			    std::cout << "\t pattern_match: " << candidate.matches_template << std::endl;
 
-//			    ofs << candidate.characters << "\t" << candidate.overall_confidence << "\t" << "pattern_match: " << candidate.matches_template << "\t";
-//			    plateHist[candidate.characters] += (candidate.matches_template*10) + 2;
-//			    phistManager.addPossiblePlate(candidate.characters, candidate.matches_template, location);
-//			}
+			    ofs << candidate.characters << "\t" << candidate.overall_confidence << "\t" << "pattern_match: " << candidate.matches_template << "\t";
 
+			    phistManager.addPossiblePlate(candidate.characters, candidate.overall_confidence, candidate.matches_template, location);
+
+
+//				phistManager.addPossiblePlate(plate.bestPlate.characters, plate.bestPlate.matches_template, location);
+///				cout << static_cast<int>(location) << " " << plate.bestPlate.characters << endl;
+//				ofs << " location: " << static_cast<int>(location) << " " << plate.bestPlate.characters << "\t" << plate.bestPlate.overall_confidence << "\t" << "pattern_match: " << plate.bestPlate.matches_template << "\t";
+			}
+#endif
 		}
 		cout << "--------------" << endl;
 		startTime = chrono::system_clock::now();

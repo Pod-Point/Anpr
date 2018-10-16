@@ -33,7 +33,7 @@ namespace PlateHistogram
 		void removeInconsistency();
 		bool isPlateAvailable(const Position pos);
 		std::string getBestCalculatedPlate(const Position pos);
-		void addPossiblePlate(const std::string & plate, bool match, const Position pos);
+		void addPossiblePlate(const std::string & plate, float confidence, bool match, const Position pos);
 
 	private:
 		Histogram _histogramList[2];

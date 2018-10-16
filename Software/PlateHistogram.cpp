@@ -8,6 +8,7 @@
 #include "PlateHistogram.h"
 #include <vector>
 #include <stdint.h>
+#include <iostream>
 
 using namespace std;
 
@@ -38,22 +39,15 @@ PlateHistogram::Position operator++(PlateHistogram::Position & pos) {
 
 void PlateHistogram::PlateHistogramManager::removeInconsistency(){
 
-	for(auto hist : _histogramList){
-		//reduce probability
-		vector<string> v2rm;
-		for (std::pair<std::string, int> plateElem : hist._histogram){
-			plateElem.second--;
-			if(plateElem.second < 0){
-				v2rm.push_back(plateElem.first);
-			}
-		}
-
-		// remove unused
-		for(auto plate2rm: v2rm){
-			hist._histogram.erase(plate2rm);
-		}
+	for(auto & hist : _histogramList){
+	    for(auto it = hist._histogram.begin(); it != hist._histogram.end(); ){
+	    	it->second--;
+	        if(it->second < 0)
+	            it = hist._histogram.erase(it);
+	        else
+	            ++it;
+	    }
 	}
-
 }
 
 bool PlateHistogram::PlateHistogramManager::isPlateAvailable(const PlateHistogram::Position pos){
@@ -88,9 +82,14 @@ std::string PlateHistogram::PlateHistogramManager::getBestCalculatedPlate(const 
 	return ret;
 }
 
-void PlateHistogram::PlateHistogramManager::addPossiblePlate(const string & plate, bool match, const PlateHistogram::Position pos){
+void PlateHistogram::PlateHistogramManager::addPossiblePlate(const string & plate, float confidence, bool match, const PlateHistogram::Position pos){
 	uint8_t postion = static_cast<uint8_t>(pos);
-	_histogramList[postion]._histogram[plate] += (match*20) + 2;
+//	int decimalFloat = static_cast<float>(confidence-static_cast<int>(confidence))*100;
+//	int intFloat = static_cast<int>(confidence-80);
+	int conf = static_cast<int>(confidence*100-8000);
+
+//	_histogramList[postion]._histogram[plate] += (match*20) + 2 + (int)(confidence-static_cast<float>(80));
+	_histogramList[postion]._histogram[plate] += (match*100) + 100 + conf; //undred from time for wait/ time for anpr
 	_histogramList[postion]._isCarParking = true;
 	_histogramList[postion]._startTime = chrono::system_clock::now();
 }
