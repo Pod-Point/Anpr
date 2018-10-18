@@ -7,10 +7,10 @@
 #include <opencv2/opencv.hpp>
 #include <chrono>
 #include "PlateHistogram.h"
-//#define RASP
+#define RASP
 #define DEBUG_IMAGE
 //#define TEST
-//#define BEST_ALGO
+#define TOP_ALGO
 
 using namespace cv;
 using namespace std;
@@ -51,8 +51,8 @@ int main(int, char**)
     	cout << "Error open" << endl;
         return -1;
     }
-    cap.set(CV_CAP_PROP_FRAME_WIDTH,1280);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT,960);
+//    cap.set(CV_CAP_PROP_FRAME_WIDTH,1280);
+//    cap.set(CV_CAP_PROP_FRAME_HEIGHT,960);
 	// Initialize the library using United States style license plates.
 	// You can use other countries/regions as well (for example: "eu", "au", or "kr")
 	alpr::Alpr openalpr("gb", "/etc/openalpr/opena-lpr.conf");
@@ -106,6 +106,7 @@ int main(int, char**)
     std::vector<alpr::AlprRegionOfInterest> regionsOfInterest;
     regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols/2, frame.rows));
     regionsOfInterest.push_back(alpr::AlprRegionOfInterest(frame.cols/2, 0, frame.cols/2, frame.rows));
+//    regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols, frame.rows));
     alpr::AlprResults results;
 
     for(;;)
@@ -166,7 +167,11 @@ int main(int, char**)
         		pos = static_cast<PlateHistogram::Position>(static_cast<int>(pos) + 1)){
 			if(phistManager.isPlateAvailable(pos)){
 				string finalPlate = phistManager.getBestCalculatedPlate(pos);
-
+		        time_t result = std::time(nullptr);
+		        char * timeStr = asctime(localtime(&result));
+		        size_t len = strlen(timeStr);
+		        if (len > 0 && timeStr[len-1] == '\n') timeStr[--len] = '\0';
+		        ofs << timeStr << "\t" << "Alpr Result "<< static_cast<int>(pos) << " " << finalPlate << endl;
 				cout<< "###########################\n";
 				cout<< "Alpr Result "<< static_cast<int>(pos) << " " << finalPlate << "\n";
 				cout<< "###########################" << endl;
@@ -208,17 +213,14 @@ int main(int, char**)
 		for (uint32_t i = 0; i < results.plates.size(); i++)
 		{
 			alpr::AlprPlateResult plate = results.plates[i];
-//			cout << "plate" << i << ": " << plate.topNPlates.size() << " results" << endl;
-//			for(auto roi : results.regionsOfInterest){
-//				cout << "x,y: " << roi.x << "," << roi.y << endl;
-//			}
+
 
 			PlateHistogram::Position location = PlateHistogram::Position::kLeft;
 
 			if(plate.plate_points[0].x > frame.cols/8*3){
 				location = PlateHistogram::Position::kRight;
 			}
-#if !defined(BEST_ALGO)
+#if defined(TOP_ALGO)
 			phistManager.addPossiblePlate(plate.bestPlate.characters, plate.bestPlate.overall_confidence, plate.bestPlate.matches_template, location);
 			cout << static_cast<int>(location) << " " << plate.bestPlate.characters << endl;
 			ofs << " location: " << static_cast<int>(location) << " " << plate.bestPlate.characters << "\t" << plate.bestPlate.overall_confidence << "\t" << "pattern_match: " << plate.bestPlate.matches_template << "\t";
@@ -246,7 +248,7 @@ int main(int, char**)
 		ofs << endl;
 
 		endTime_algo = chrono::system_clock::now();
-		auto dt = endTime_algo - startTime_algo;
+		auto dt = chrono::duration_cast<chrono::milliseconds>(endTime_algo - startTime_algo);
 		cout<< "Algo time with plate " << dt.count() << "\n";
     }
     ofs.close();

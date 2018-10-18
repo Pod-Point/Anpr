@@ -56,7 +56,7 @@ CPPFLAGS := $(INCLUDE)#-I$(DIR_OPENCV_INCLUDE) -I$(DIR_OPENALPR_INCLUDE)
 #else
 #	$(error Build mode $(BUILD_MODE) not supported by this Makefile)
 #endif
-CFLAGS += -O0 -g3 -Wall
+#CFLAGS += -O3 -g3 -Wall
 CXXFLAGS += -std=c++11 -O0 -g3 -Wall #-D_GLIBCXX_USE_CXX11_ABI=0
 #LDFLAGS += -L$(DIR_LIB)
 

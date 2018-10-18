@@ -89,7 +89,7 @@ void PlateHistogram::PlateHistogramManager::addPossiblePlate(const string & plat
 	int conf = static_cast<int>(confidence*100-8000);
 
 //	_histogramList[postion]._histogram[plate] += (match*20) + 2 + (int)(confidence-static_cast<float>(80));
-	_histogramList[postion]._histogram[plate] += (match*100) + 100 + conf; //undred from time for wait/ time for anpr
+	_histogramList[postion]._histogram[plate] += (match*100) + 100 + conf; //from time for wait/ time for anpr
 	_histogramList[postion]._isCarParking = true;
 	_histogramList[postion]._startTime = chrono::system_clock::now();
 }
