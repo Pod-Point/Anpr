@@ -2,48 +2,25 @@ PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 UNAME := $(shell uname)
 
-ifeq ($(UNAME), Linux)
-##
-###ifeq ("$(OS)","Windows_NT") 
+ifeq ($(ARCH), arm)
+#TOOLCHAIN_PATH :=/home/jose/Documents/Utility/YoctoRPi/tools
+CC  = arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
+CXX = arm-linux-gnueabihf-g++ --sysroot=/home/jose/Documents/Utility/YoctoRPi/sysroot #-std=c++0x -I/lib/ -w  -fmessage-length=0 -Wall
+INCLUDE = -I.
+
+#DIR_OPENSSL_INCLUDE = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
+#DIR_CURL_LIB = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
+#LDLIBS += -lIDTechSDK -lcrypto -lcurl -lpthread
+LDFLAGS += -Wl,--rpath-link /home/jose/Documents/Utility/YoctoRPi/sysroot/opt/vc/lib/
+LDLIBS += -lopenalpr\
+	-lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video -lpthread -lresolv
+else
+ARCH = x86_64
 CC    = gcc# -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
 CXX = g++# -fmessage-length=0
 INCLUDE = -I.
 LDLIBS += -lopenalpr\
 	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
-##
-else
-TOOLCHAIN_PATH :=/home/jose/Documents/Utility/YoctoRPi/tools
-CC  = $(TOOLCHAIN_PATH)/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
-CXX = $(TOOLCHAIN_PATH)/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-g++ --sysroot=/home/jose/Documents/Utility/YoctoRPi/sysroot #-std=c++0x -I/lib/ -w  -fmessage-length=0 -Wall
-#INCLUDE = \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9/backward" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/include" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/use/include/arm-linux/gnueabihf" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include-fixed"
-#    
-INCLUDE = -I. \
-	-I/home/jose/Documents/Utility/YoctoRPi/sysroot/usr/include/arm-linux-gnueabihf/
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/c++/4.9/backward" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/include" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/include/use/include/arm-linux/gnueabihf" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include" \
-#    -I"C:/SysGCC/Raspberry/arm-linux-gnueabihf/4.9/include-fixed"
-
-#DIR_OPENSSL_INCLUDE = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
-#DIR_CURL_LIB = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
-#LDLIBS += -lIDTechSDK -lcrypto -lcurl -lpthread
-#LDFLAGS += -L. -Wl,-R. '-Wl,-R$$ORIGIN' -Wl,--rpath-link=C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/lib/arm-linux-gnueabihf -Wl,--rpath-link=C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf
-LDFLAGS = -L/home/jose/Documents/Utility/YoctoRPi/sysroot/usr/lib \
-		  -L/home/jose/Documents/Utility/YoctoRPi/sysroot/usr/lib/arm-linux-gnueabihf
-#LIB_EXTENSION = so
-LDLIBS += -lopenalpr\
-	-lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
-
 endif
 
 #OBJS = sw.o
@@ -60,7 +37,7 @@ CPPFLAGS := $(INCLUDE)#-I$(DIR_OPENCV_INCLUDE) -I$(DIR_OPENALPR_INCLUDE)
 CXXFLAGS += -std=c++11 -O0 -g3 -Wall #-D_GLIBCXX_USE_CXX11_ABI=0
 #LDFLAGS += -L$(DIR_LIB)
 
-TARGET_DIR = build
+TARGET_DIR = build/$(ARCH)
 TARGET  = PodPointAnpr
 
 CPPSRCS := $(wildcard *.cpp)
@@ -83,7 +60,15 @@ $(TARGET_DIR)/%.o: %.cpp | $(TARGET_DIR)
 
 $(TARGET_DIR):
 	mkdir $(TARGET_DIR)	
+	
+.PHONY: test
+test:
+	cd UnitTest && $(MAKE)	
 
 .PHONY: clean
 clean:
 	rm -fr $(TARGET_DIR)/*
+
+.PHONY: clean-test
+clean-test:
+	cd UnitTest && $(MAKE) clean		

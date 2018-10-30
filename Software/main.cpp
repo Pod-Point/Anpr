@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <chrono>
 #include "PlateHistogram.h"
-#define RASP
+//#define RASP
 #define DEBUG_IMAGE
 //#define TEST
 #define TOP_ALGO
@@ -45,14 +45,32 @@ int main(int, char**)
 
 
     VideoCapture cap(0); // open the default camera
-//    VideoCapture cap("rtsp://admin:123456@192.168.194.198:554/live/ch0", cv::CAP_FFMPEG);
-
+#if defined(RASP)
+//    VideoCapture cap("rtsp://admin:123456@192.168.194.198:80/live/ch1");
+//    VideoCapture cap("rtsp://admin:123456@10.42.0.115:80/live/ch0");
+//    VideoCapture cap("rtsp://admin:123456@10.42.0.115:80/live/ch1");
+#else
+    //    VideoCapture cap("rtsp://admin:123456@192.168.194.198:554/live/ch0", cv::CAP_FFMPEG);
+//    VideoCapture cap("rtsp://admin:123456@10.42.0.17:80/live/ch1", cv::CAP_FFMPEG);
+#endif
     if(!cap.isOpened()){  // check if we succeeded
     	cout << "Error open" << endl;
         return -1;
     }
+    double bright = cap.get(CV_CAP_PROP_BRIGHTNESS);
+    cout << "brightness: " << bright << "\n";
+    cap.set(CV_CAP_PROP_BRIGHTNESS,0.5);
+    cap.set(CV_CAP_PROP_BRIGHTNESS+1,0.5);
+    cap.set(CV_CAP_PROP_BRIGHTNESS+2,0.5);
+
+    bright = cap.get(CV_CAP_PROP_BRIGHTNESS);
+    cout << "brightness: " << bright << "\n";
 //    cap.set(CV_CAP_PROP_FRAME_WIDTH,1280);
 //    cap.set(CV_CAP_PROP_FRAME_HEIGHT,960);
+//    cap.set(CV_CAP_PROP_FRAME_WIDTH,640);
+//    cap.set(CV_CAP_PROP_FRAME_HEIGHT,480);
+//    cap.set(CV_CAP_PROP_FRAME_WIDTH,640);
+//    cap.set(CV_CAP_PROP_FRAME_HEIGHT,360);
 	// Initialize the library using United States style license plates.
 	// You can use other countries/regions as well (for example: "eu", "au", or "kr")
 	alpr::Alpr openalpr("gb", "/etc/openalpr/opena-lpr.conf");
@@ -102,13 +120,14 @@ int main(int, char**)
 #else
     cap >> frame;
 #endif
+    cout << "W: " << frame.cols << "\n";
+    cout << "H: " << frame.rows << endl;
 
     std::vector<alpr::AlprRegionOfInterest> regionsOfInterest;
     regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols/2, frame.rows));
     regionsOfInterest.push_back(alpr::AlprRegionOfInterest(frame.cols/2, 0, frame.cols/2, frame.rows));
 //    regionsOfInterest.push_back(alpr::AlprRegionOfInterest(0, 0, frame.cols, frame.rows));
     alpr::AlprResults results;
-
     for(;;)
     {
     	startTime_algo = chrono::system_clock::now();
@@ -137,6 +156,14 @@ int main(int, char**)
 
 #else
     	cap >> frame;
+//    	flip(frame, frame, 1);
+//    	if(cap.read(frame)){
+//    		countok++;
+//    	}else{
+//    		countko++;
+//    	}
+//    	cout <<  "countok: " << countok << "\n";
+//    	cout <<  "countko: " << countko << "\n";
 #endif
 //        cout << frame.size() << endl;
 //        cout << frame.channels() << endl;
