@@ -1,5 +1,6 @@
 ifeq ($(ARCH), arm)
 DIR_GTEST_LIB     = /home/jose/Documents/Utility/googletest/lib/arm
+CPPFLAGS += -DRASP
 else
 DIR_GTEST_LIB     = /home/jose/Documents/Utility/googletest/lib
 endif
@@ -8,7 +9,7 @@ DIR_GTEST_INCLUDE = /home/jose/Documents/Utility/googletest/googletest/include
 
 INCLUDE = -I. -I$(DIR_GTEST_INCLUDE)
 
-CPPFLAGS = $(INCLUDE)# -I../ -I../$(DIR_IDT_SDK) -I../$(DIR_COMMON) -I$(DIR_GTEST_INCLUDE) -I$(DIR_OPENSSL_INCLUDE) -I$(DIR_CURL_INCLUDE) # -L$(DIR_GTEST_LIB) -L$(DIR_OPENSSL_LIB)
+CPPFLAGS += $(INCLUDE)# -I../ -I../$(DIR_IDT_SDK) -I../$(DIR_COMMON) -I$(DIR_GTEST_INCLUDE) -I$(DIR_OPENSSL_INCLUDE) -I$(DIR_CURL_INCLUDE) # -L$(DIR_GTEST_LIB) -L$(DIR_OPENSSL_LIB)
 
 CXXFLAGS += -pthread
 

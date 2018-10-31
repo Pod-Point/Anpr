@@ -21,7 +21,7 @@ LDLIBS += -lopenalpr\
 	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
 endif
 #OBJS = sw.o
-CPPFLAGS := $(INCLUDE)
+CPPFLAGS := $(INCLUDE) -D$(ARCH)
 
 #ifeq ($(BUILD_MODE),debug)
 #	CFLAGS += -O0 -g3 -Wall
@@ -52,11 +52,9 @@ export TARGET_DIR
 all:$(TARGET_DIR)/$(TARGET)
 
 $(TARGET_DIR)/$(TARGET) : $(COBJS) $(CPPOBJS)
-	$(info all is 1)
 	$(CXX) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(TARGET_DIR)/%.o: %.cpp | $(TARGET_DIR)
-	$(info all is 2)
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 $(TARGET_DIR):
