@@ -45,7 +45,7 @@ TEST(opencv, CameraProperty)
 {
 	VideoCapture cap(1);
 	double ret;
-	for(int i = 0; i <= CV_CAP_PROP_AUTOFOCUS; i++ ){
+	for(int i = 0; i <= CV_CAP_PROP_SETTINGS; i++ ){
 		ret = cap.get(i);
 		cout << "i=" << i << "ret=" << ret << "\n";
 	}

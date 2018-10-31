@@ -8,8 +8,6 @@ CC  = arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
 CXX = arm-linux-gnueabihf-g++ --sysroot=/home/jose/Documents/Utility/YoctoRPi/sysroot #-std=c++0x -I/lib/ -w  -fmessage-length=0 -Wall
 INCLUDE = -I.
 
-#DIR_OPENSSL_INCLUDE = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
-#DIR_CURL_LIB = "C:/SysGCC/Raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf"
 #LDLIBS += -lIDTechSDK -lcrypto -lcurl -lpthread
 LDFLAGS += -Wl,--rpath-link /home/jose/Documents/Utility/YoctoRPi/sysroot/opt/vc/lib/
 LDLIBS += -lopenalpr\
@@ -22,9 +20,8 @@ INCLUDE = -I.
 LDLIBS += -lopenalpr\
 	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
 endif
-
 #OBJS = sw.o
-CPPFLAGS := $(INCLUDE)#-I$(DIR_OPENCV_INCLUDE) -I$(DIR_OPENALPR_INCLUDE)
+CPPFLAGS := $(INCLUDE)
 
 #ifeq ($(BUILD_MODE),debug)
 #	CFLAGS += -O0 -g3 -Wall
@@ -43,23 +40,27 @@ TARGET  = PodPointAnpr
 CPPSRCS := $(wildcard *.cpp)
 CPPOBJS := $(patsubst %.cpp, $(TARGET_DIR)/%.o, $(CPPSRCS))
 
+export ARCH
+export CC
+export CXX
+export CXXFLAGS
+export LDFLAGS
+export LDLIBS
+export TARGET_DIR
+
 .PHONY: all
-all: $(TARGET_DIR)/$(TARGET)
+all:$(TARGET_DIR)/$(TARGET)
 
 $(TARGET_DIR)/$(TARGET) : $(COBJS) $(CPPOBJS)
+	$(info all is 1)
 	$(CXX) -o $@ $^ $(LDFLAGS) $(LDLIBS)
-#	cp $(DIR_LIB)/*.* $(TARGET_DIR)/
-	
-#$(TARGET_DIR)/%.o: %.cpp | $(TARGET_DIR)
-#	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
 
-#%.o:	$(PROJECT_ROOT)%.c
-#	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
 $(TARGET_DIR)/%.o: %.cpp | $(TARGET_DIR)
+	$(info all is 2)
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 $(TARGET_DIR):
-	mkdir $(TARGET_DIR)	
+	mkdir -p $(TARGET_DIR)	
 	
 .PHONY: test
 test:
