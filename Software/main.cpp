@@ -9,7 +9,6 @@
 #include "PlateHistogram.h"
 //#define RASP
 #define DEBUG_IMAGE
-//#define TEST
 #define TOP_ALGO
 
 using namespace cv;
@@ -59,12 +58,12 @@ int main(int, char**)
     }
     double bright = cap.get(CV_CAP_PROP_BRIGHTNESS);
     cout << "brightness: " << bright << "\n";
-    cap.set(CV_CAP_PROP_BRIGHTNESS,0.5);
-    cap.set(CV_CAP_PROP_BRIGHTNESS+1,0.5);
-    cap.set(CV_CAP_PROP_BRIGHTNESS+2,0.5);
-
-    bright = cap.get(CV_CAP_PROP_BRIGHTNESS);
-    cout << "brightness: " << bright << "\n";
+//    cap.set(CV_CAP_PROP_BRIGHTNESS,0.5);
+//    cap.set(CV_CAP_PROP_BRIGHTNESS+1,0.5);
+//    cap.set(CV_CAP_PROP_BRIGHTNESS+2,0.5);
+//
+//    bright = cap.get(CV_CAP_PROP_BRIGHTNESS);
+//    cout << "brightness: " << bright << "\n";
 //    cap.set(CV_CAP_PROP_FRAME_WIDTH,1280);
 //    cap.set(CV_CAP_PROP_FRAME_HEIGHT,960);
 //    cap.set(CV_CAP_PROP_FRAME_WIDTH,640);
@@ -73,7 +72,7 @@ int main(int, char**)
 //    cap.set(CV_CAP_PROP_FRAME_HEIGHT,360);
 	// Initialize the library using United States style license plates.
 	// You can use other countries/regions as well (for example: "eu", "au", or "kr")
-	alpr::Alpr openalpr("gb", "/etc/openalpr/opena-lpr.conf");
+	alpr::Alpr openalpr("gb", "/etc/openalpr/openalpr.conf");
 
 	// Optionally specify the top N possible plates to return (with confidences).  Default is 10
 	openalpr.setTopN(5);
@@ -101,25 +100,9 @@ int main(int, char**)
 #endif
     int numTest = 0;
     uint64_t sumtime = 0;
-#if defined(TEST)
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1025/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1029/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1044/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1048/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1123/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1130/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1135/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1200/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1211/fwout/img";
-//    string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1211/bwin/img";
-      string test_pre = "/home/jose/Documents/Projects/PodPoint/Anpr/ResultPI/ResultPi20181012_1211/bwinLL/img";
-    string test_post = ".jpg";
-    int test_num = 263;
-    int test_num_max = 291;
-    frame = imread(test_pre+to_string(test_num)+test_post);
-#else
+
     cap >> frame;
-#endif
+
     cout << "W: " << frame.cols << "\n";
     cout << "H: " << frame.rows << endl;
 
@@ -131,30 +114,6 @@ int main(int, char**)
     for(;;)
     {
     	startTime_algo = chrono::system_clock::now();
-
-#if defined(TEST)
-    	if(test_num > test_num_max){
-            //reduce probability
-            phistManager.removeInconsistency();
-            // check if a plate is available on left and on the right
-            for(PlateHistogram::Position pos = PlateHistogram::Position::kLeft;
-            		pos < PlateHistogram::Position::kMaxPosition;
-            		pos = static_cast<PlateHistogram::Position>(static_cast<int>(pos) + 1)){
-    			if(phistManager.isPlateAvailable(pos)){
-    				string finalPlate = phistManager.getBestCalculatedPlate(pos);
-
-    				cout<< "###########################\n";
-    				cout<< "Alpr Result "<< static_cast<int>(pos) << " " << finalPlate << "\n";
-    				cout<< "###########################" << endl;
-    			}
-            }
-    		return 0;
-    	}
-
-    	frame = imread(test_pre+to_string(test_num)+test_post);
-    	test_num++;
-
-#else
     	cap >> frame;
 //    	flip(frame, frame, 1);
 //    	if(cap.read(frame)){
@@ -162,9 +121,6 @@ int main(int, char**)
 //    	}else{
 //    		countko++;
 //    	}
-//    	cout <<  "countok: " << countok << "\n";
-//    	cout <<  "countko: " << countko << "\n";
-#endif
 //        cout << frame.size() << endl;
 //        cout << frame.channels() << endl;
 //        cout << frame.type() << endl;
@@ -209,6 +165,7 @@ int main(int, char**)
 #if defined(DEBUG_IMAGE)
         imwrite(imgName, frame);
         imgNumber++;
+//        continue;
 #endif
         if( results.plates.size() < 1){
         	endTime_algo = chrono::system_clock::now();

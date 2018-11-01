@@ -7,6 +7,7 @@ ifeq ($(ARCH), arm)
 CC  = arm-linux-gnueabihf-gcc # -I/lib/ -w  -fmessage-length=0  -lstdc++ -Wall
 CXX = arm-linux-gnueabihf-g++ --sysroot=/home/jose/Documents/Utility/YoctoRPi/sysroot #-std=c++0x -I/lib/ -w  -fmessage-length=0 -Wall
 INCLUDE = -I.
+CPPFLAGS += -DRASP
 
 #LDLIBS += -lIDTechSDK -lcrypto -lcurl -lpthread
 LDFLAGS += -Wl,--rpath-link /home/jose/Documents/Utility/YoctoRPi/sysroot/opt/vc/lib/
@@ -21,7 +22,7 @@ LDLIBS += -lopenalpr\
 	-lopencv_imgproc -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_video#-lopencv_ffmpeg# -lliblept170 -lopencv_ffmpeg300 -lopencv_world300
 endif
 #OBJS = sw.o
-CPPFLAGS := $(INCLUDE) -D$(ARCH)
+CPPFLAGS += $(INCLUDE)
 
 #ifeq ($(BUILD_MODE),debug)
 #	CFLAGS += -O0 -g3 -Wall
