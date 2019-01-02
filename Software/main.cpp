@@ -115,25 +115,6 @@ int main(int, char**)
     {
     	startTime_algo = chrono::system_clock::now();
     	cap >> frame;
-//    	flip(frame, frame, 1);
-//    	if(cap.read(frame)){
-//    		countok++;
-//    	}else{
-//    		countko++;
-//    	}
-//        cout << frame.size() << endl;
-//        cout << frame.channels() << endl;
-//        cout << frame.type() << endl;
-//        cout << frame.at(0,0) << endl;
-        //{need for darkness
-//		cvtColor(frame, hsv, COLOR_BGR2HSV);
-//		Scalar pixelmean = mean(hsv);
-//        Scalar pixelsum = sum(hsv);
-//        cout << "mean" << pixelmean << endl;
-//        cout << "sum" << pixelsum << endl;
-//        if(pixelmean.val[2] < 80)
-//        	cout << "Night" << endl;
-        //}need for darkness
 #if defined(DEBUG_IMAGE)
         imshow("Plate", frame);
         waitKey(30);
