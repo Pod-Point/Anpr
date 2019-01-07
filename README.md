@@ -1,6 +1,6 @@
 # Anpr
 ## Raspberry Pi setup
-On a Raspberry Pi intatall:
+On a Raspberry Pi install:
 ```
 sudo apt-get install build-essential chrpath diffstat gawk libncurses5-dev texinfo pkg-config
 ```
